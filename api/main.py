@@ -139,3 +139,5 @@ async def parse_image(request: ImageRequest):
 
     import json
     return {"result": json.dumps(courses, ensure_ascii=False)}
+
+handler=app
