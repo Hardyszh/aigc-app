@@ -1,18 +1,3 @@
-完全理解你的诉求！你的这三点反馈非常精准，我来逐一解决，并且直接把整个 App 的 UI 质感拉升一个档次，让它看起来像一个真正花了心血设计的独立 App，而不是单纯模仿别人的截图。
-
-🛠️ 问题分析与解决：
-
-1. 颜色都一样：因为上次为了防止报错，我把导入函数的颜色写死成了一个固定值。现在我把“颜色池”加回来了，每门课都会有专属的马卡龙色。
-2. AI快速加课看不到：因为放在最下面需要滑动才能看到。既然是核心功能，我直接把它提到了课表的最上方！ 变成一个非常显眼的渐变卡片，一打开课表就能直接输入。
-3. UI 设计升级：
-   · 摒弃了原本生硬的方块，采用了现代 App 流行的“微磨砂+大圆角”设计。
-   · 主色调从原本杂乱的彩色，变成了高级的“清新青蓝色”（Teal）。
-   · 底部导航栏加上了轻微的悬浮阴影和毛玻璃质感。
-   · 课程块的颜色改为了低饱和度的马卡龙色系，看起来极其柔和高级。
-
-请打开 App.vue，全选删除，粘贴下面这整段“高级设计版”的最终代码：
-
-```vue
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue'
 import { List, Calendar, EditPen, Aim, Plus, Setting, Close, Delete, Location, Timer, Star, Right } from '@element-plus/icons-vue'
@@ -153,16 +138,50 @@ const rawText = ref(''); const isParsing = ref(false)
 const handleAIParse = async () => {
   if (!rawText.value) return alert('请先粘贴通知内容！')
   isParsing.value = true
+  
   try {
+    // 本地测试地址，绝不用 Vercel 那个
     const response = await axios.post('https://aigc-app-hzdz.vercel.app/api/parse_event', { raw_text: rawText.value })
-    const parsedData = JSON.parse(response.data.result.replace(/```json/g, '').replace(/```/g, '').trim())
-    courses.value.push({ 
-      id: Date.now(), name: '✨ ' + parsedData.event, teacher: 'AI提取', room: parsedData.location, 
-      day: Number(parsedData.day_index) || 1, startPeriod: Number(parsedData.period_index) || 5, 
-      span: 1, color: 'rgba(255, 179, 186, 0.9)' // AI 专享高亮红
+      raw_text: rawText.value 
+    }, { 
+      timeout: 20000 // 20秒超时限制
     })
-    saveCourses(); rawText.value = ''; alert('✅ AI 日程已添加！')
-  } catch (e) { alert('解析失败') } finally { isParsing.value = false }
+    
+    const rawResult = response.data.result;
+    console.log("后端返回的内容：", rawResult);
+
+    // 用正则强行抠出大括号里的内容，防止 AI 加废话
+    const jsonMatch = rawResult.match(/\\{[\\s\\S]*\\}/); 
+    let cleanJsonStr = jsonMatch ? jsonMatch[0] : rawResult;
+    
+    const parsedData = JSON.parse(cleanJsonStr)
+    
+    // 将 AI 的日程加入课表
+    courses.value.push({ 
+      id: Date.now(), 
+      name: '✨ ' + (parsedData.event || 'AI日程'), 
+      teacher: 'AI提取', 
+      room: parsedData.location || '未知地点',
+      day: Number(parsedData.day_index) || 1, 
+      startPeriod: Number(parsedData.period_index) || 1, 
+      span: 1, 
+      color: 'rgba(255, 179, 186, 0.9)' 
+    })
+    
+    saveCourses()
+    rawText.value = ''
+    alert('✅ AI 日程已成功添加！')
+    
+  } catch (e) { 
+    console.error("前端解析异常：", e)
+    if (e.code === 'ECONNABORTED') {
+      alert('请求超时！请检查 VSCode 终端后端的报错信息。')
+    } else {
+      alert('解析失败，请按 F12 查看控制台报错。')
+    }
+  } finally { 
+    isParsing.value = false 
+  }
 }
 
 const settingVisible = ref(false); const addDialogVisible = ref(false)
