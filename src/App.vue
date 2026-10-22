@@ -154,7 +154,7 @@ const handleAIParse = async () => {
   if (!rawText.value) return alert('请先粘贴通知内容！')
   isParsing.value = true
   try {
-    const response = await axios.post('/api/parse_event', { raw_text: rawText.value })
+    const response = await axios.post('https://aigc-app-hzdz.vercel.app/api/parse_event', { raw_text: rawText.value })
     const parsedData = JSON.parse(response.data.result.replace(/```json/g, '').replace(/```/g, '').trim())
     courses.value.push({ 
       id: Date.now(), name: '✨ ' + parsedData.event, teacher: 'AI提取', room: parsedData.location, 
