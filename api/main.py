@@ -2,13 +2,12 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import requests
-import time
-import json
 import os
 
+# 👇 这一行必须在最顶层，绝对不能缩进！Vercel 靠这行启动服务
 app = FastAPI()
 
-# 完美跨域配置
+# 完美的跨域配置
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -22,12 +21,13 @@ class EventRequest(BaseModel):
 
 @app.post("/api/parse_event")
 async def parse_event(request: EventRequest):
-    # ⚠️ 填入你真实的 API Key
- api_key = os.environ.get("DASHSCOPE_API_KEY") 
-    
+    # 从 Vercel 的环境变量中安全读取 API Key
+    api_key = os.environ.get("DASHSCOPE_API_KEY")
+    if not api_key:
+        raise HTTPException(status_code=500, detail="后端未配置 API Key")
+
     url = "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions"
     
-    # 极其严苛的 Prompt，强制 AI 吐出干净的 JSON
     prompt = f"""你是一个大学生日程规划助手。请分析以下文本，提取事件信息。
 【注意】如果文本中完全没有提到时间，请将 day_index 设为 1（周一），period_index 设为 1（第1节）。
 你必须且只能输出以下 JSON 格式，不要包含任何其他文字、解释或 markdown 标记：
@@ -41,23 +41,16 @@ async def parse_event(request: EventRequest):
     }
 
     try:
-        # 加入 timeout=20，防止无限卡死
         response = requests.post(url, headers=headers, json=data, timeout=20)
-        
         if response.status_code != 200:
-            print("\\n============== 阿里云报错 ==============")
-            print(response.text)
-            print("========================================\\n")
+            print("阿里云报错：", response.text)
             raise HTTPException(status_code=500, detail="AI接口返回错误")
         
         ai_result = response.json()["choices"][0]["message"]["content"]
         return {"result": ai_result}
-        
-    except requests.exceptions.Timeout:
-        print("\\n=== 请求超时，可能是网络问题或 Key 没开通 ===\\n")
-        raise HTTPException(status_code=500, detail="网络超时")
     except Exception as e:
-        print("\\n=== 代码异常 ===\\n", str(e))
+        print("代码异常：", str(e))
         raise HTTPException(status_code=500, detail="代码异常")
 
- handler = app
+# 👇 Vercel 的兜底要求，必须写
+handler = app
