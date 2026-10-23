@@ -140,7 +140,7 @@ const handleAIParse = async () => {
   isParsing.value = true
   
   try {
-    // 本地测试地址，绝不用 Vercel 那个
+    // ✅ 正确写法：完整后端地址
     const response = await axios.post('https://aigc-app-hzdz.vercel.app/api/parse_event', { raw_text: rawText.value })
       raw_text: rawText.value 
     }, { 
