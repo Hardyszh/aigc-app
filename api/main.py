@@ -59,3 +59,5 @@ async def parse_event(request: EventRequest):
     except Exception as e:
         print("\\n=== 代码异常 ===\\n", str(e))
         raise HTTPException(status_code=500, detail="代码异常")
+
+ handler = app
