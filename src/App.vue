@@ -140,23 +140,22 @@ const handleAIParse = async () => {
   isParsing.value = true
   
   try {
-    // ✅ 正确写法：完整后端地址
-    const response = await axios.post('https://aigc-app-hzdz.vercel.app/api/parse_event', { raw_text: rawText.value })
+    // 线上地址
+    const response = await axios.post('https://aigc-app-hzdz.vercel.app/api/parse_event', { 
       raw_text: rawText.value 
     }, { 
-      timeout: 20000 // 20秒超时限制
+      timeout: 20000 
     })
     
     const rawResult = response.data.result;
     console.log("后端返回的内容：", rawResult);
 
-    // 用正则强行抠出大括号里的内容，防止 AI 加废话
+    // 强行提取 JSON
     const jsonMatch = rawResult.match(/\\{[\\s\\S]*\\}/); 
     let cleanJsonStr = jsonMatch ? jsonMatch[0] : rawResult;
     
     const parsedData = JSON.parse(cleanJsonStr)
     
-    // 将 AI 的日程加入课表
     courses.value.push({ 
       id: Date.now(), 
       name: '✨ ' + (parsedData.event || 'AI日程'), 
@@ -173,12 +172,9 @@ const handleAIParse = async () => {
     alert('✅ AI 日程已成功添加！')
     
   } catch (e) { 
+    // 👇 就是这里！你之前可能不小心删掉了 catch，导致报错
     console.error("前端解析异常：", e)
-    if (e.code === 'ECONNABORTED') {
-      alert('请求超时！请检查 VSCode 终端后端的报错信息。')
-    } else {
-      alert('解析失败，请按 F12 查看控制台报错。')
-    }
+    alert('解析失败，请按 F12 查看控制台。')
   } finally { 
     isParsing.value = false 
   }
