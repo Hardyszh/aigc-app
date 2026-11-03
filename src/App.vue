@@ -144,7 +144,7 @@ const handleAIParse = async () => {
     const response = await axios.post('https://aigc-app-hzdz.vercel.app/api/parse_event', { 
       raw_text: rawText.value 
     }, { 
-      timeout: 20000 
+      timeout: 60000 
     })
     
     const rawResult = response.data.result;
