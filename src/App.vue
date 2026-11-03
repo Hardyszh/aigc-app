@@ -151,14 +151,14 @@ const handleAIParse = async () => {
     console.log("后端返回的内容：", rawResult);
 
     // 强行提取 JSON
-    const jsonMatch = rawResult.match(/\\{[\\s\\S]*\\}/); 
+    const jsonMatch = rawResult.match(/\\\\{[\\\\s\\\\S]*\\\\}/); 
     let cleanJsonStr = jsonMatch ? jsonMatch[0] : rawResult;
     
     const parsedData = JSON.parse(cleanJsonStr)
     
     courses.value.push({ 
       id: Date.now(), 
-      name: '✨ ' + (parsedData.event || 'AI日程'), 
+      name: '? ' + (parsedData.event || 'AI日程'), 
       teacher: 'AI提取', 
       room: parsedData.location || '未知地点',
       day: Number(parsedData.day_index) || 1, 
@@ -169,10 +169,10 @@ const handleAIParse = async () => {
     
     saveCourses()
     rawText.value = ''
-    alert('✅ AI 日程已成功添加！')
+    alert('? AI 日程已成功添加！')
     
   } catch (e) { 
-    // 👇 就是这里！你之前可能不小心删掉了 catch，导致报错
+    // ?? 就是这里！你之前可能不小心删掉了 catch，导致报错
     console.error("前端解析异常：", e)
     alert('解析失败，请按 F12 查看控制台。')
   } finally { 
