@@ -20,37 +20,34 @@ class EventRequest(BaseModel):
     raw_text: str
 
 @app.post("/api/parse_event")
-async def parse_event(request: EventRequest):
-    # 💡 答辩专用：直接返回写死的完美假数据（无视用户输入）
-    fake_data = """[
-      {
-        "event": "70周年高质量发展大会",
-        "time": "周日 09:45",
-        "location": "正心楼316、319",
-        "importance": "高",
-        "advice": "前50位可获赠校庆纪念品，请尽早前往",
-        "day_index": 7,
-        "period_index": 2
-      },
-      {
-        "event": "优秀校友分享会",
-        "time": "周日 14:00",
-        "location": "青越活动中心201",
-        "importance": "高",
-        "advice": "校友返校话成长，经验分享助远航",
-        "day_index": 7,
-        "period_index": 5
-      },
-      {
-        "event": "年级大会-寝室里的那些事",
-        "time": "周一 18:30",
-        "location": "青越活动中心201",
-        "importance": "高",
-        "advice": "会后召开班委会，学委做好签到，无特殊原因不得请假",
-        "day_index": 1,
-        "period_index": 9
-      }
-    ]"""
-    return {"result": fake_data}
+asyncdefparse_event(request:EventRequest):
+# 从 Vercel 的环境变量中安全读取 API Key
+api_key=os.environ.get("DASHSCOPE_API_KEY")
+ifnotapi_key:
+raiseHTTPException(status_code=500,detail="后端未配置 API Key")
+
+url="https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions"
+prompt=f"""你是一个大学生日程规划助手。请分析以下文本，提取事件信息。
+【注意】如果文本中完全没有提到时间，请将 day_index 设为 1（周一），period_index 设为 1（第1节）。
+你必须且只能输出以下 JSON 格式，不要包含任何其他文字、解释或 markdown 标记：
+{{"event": "事件名称", "time": "具体时间", "location": "地点", "importance": "高/中/低", "advice": "建议", "day_index": 1到7的数字, "period_index": 1到13的数字}}
+文本内容：{request.raw_text}"""
+
+headers={"Authorization":f"Bearer{api_key}","Content-Type":"application/json"}
+data={
+"model":"qwen-plus",
+"messages": [{"role":"user","content":prompt}]
+}
+
+try:
+response=requests.post(url,headers=headers,json=data,timeout=20)
+ifresponse.status_code!=200:
+print("阿里云报错：",response.text)
+raiseHTTPException(status_code=500,detail="AI接口返回错误")
+ai_result=response.json()["choices"][0]["message"]["content"]
+return{"result":ai_result}
+exceptExceptionase:
+print("代码异常：",str(e))
+raiseHTTPException(status_code=500,detail="代码异常")
 # 👇 Vercel 的兜底要求，必须写
 handler = app

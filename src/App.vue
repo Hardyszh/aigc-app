@@ -101,7 +101,7 @@ const saveTodos = () => localStorage.setItem('myTodos', JSON.stringify(todos.val
 const addTodo = () => {
   if (!newTodoText.value.trim()) return
   todos.value.unshift({ id: Date.now(), text: newTodoText.value, done: false, color: todoColors[Math.floor(Math.random() * todoColors.length)] })
-  newTodoText.value = ''; saveTodos()
+  newTodoText.value = ''; saveTodos()  
 }
 const removeTodo = (id) => { if(confirm('删除？')) { todos.value = todos.value.filter(t => t.id !== id); saveTodos() } }
 
@@ -139,45 +139,40 @@ const handleAIParse = async () => {
   if (!rawText.value) return alert('请先粘贴通知内容！')
   isParsing.value = true
   
-  try {
-    // 线上地址
-    const response = await axios.post('https://aigc-app-hzdz.vercel.app/api/parse_event', { 
-      raw_text: rawText.value 
-    }, { 
-      timeout: 60000 
-    })
-    
-    const rawResult = response.data.result;
-    console.log("后端返回的内容：", rawResult);
+try{
+// 线上地址
+constresponse=awaitaxios.post('https://aigc-app-hzdz.vercel.app/api/parse_event', {
+raw_text:rawText.value
+}, {
+timeout:20000
+})
+constrawResult=response.data.result;
+console.log("后端返回的内容：",rawResult);
 
-    // 强行提取 JSON
-    const jsonMatch = rawResult.match(/\\\\{[\\\\s\\\\S]*\\\\}/); 
-    let cleanJsonStr = jsonMatch ? jsonMatch[0] : rawResult;
-    
-    const parsedData = JSON.parse(cleanJsonStr)
-    
-    courses.value.push({ 
-      id: Date.now(), 
-      name: '? ' + (parsedData.event || 'AI日程'), 
-      teacher: 'AI提取', 
-      room: parsedData.location || '未知地点',
-      day: Number(parsedData.day_index) || 1, 
-      startPeriod: Number(parsedData.period_index) || 1, 
-      span: 1, 
-      color: 'rgba(255, 179, 186, 0.9)' 
-    })
-    
-    saveCourses()
-    rawText.value = ''
-    alert('? AI 日程已成功添加！')
-    
-  } catch (e) { 
-    // ?? 就是这里！你之前可能不小心删掉了 catch，导致报错
-    console.error("前端解析异常：", e)
-    alert('解析失败，请按 F12 查看控制台。')
-  } finally { 
-    isParsing.value = false 
-  }
+// 强行提取 JSON
+constjsonMatch=rawResult.match(/\\{[\\s\\S]*\\}/);
+letcleanJsonStr=jsonMatch?jsonMatch[0]:rawResult;
+constparsedData=JSON.parse(cleanJsonStr)
+courses.value.push({
+id:Date.now(),
+name:'✨ '+(parsedData.event||'AI日程'),
+teacher:'AI提取',
+room:parsedData.location||'未知地点',
+day:Number(parsedData.day_index)||1,
+startPeriod:Number(parsedData.period_index)||1,
+span:1,
+color:'rgba(255, 179, 186, 0.9)'
+})
+saveCourses()
+rawText.value=''
+alert('✅ AI 日程已成功添加！')
+}catch(e) {
+// 👇 就是这里！你之前可能不小心删掉了 catch，导致报错
+console.error("前端解析异常：",e)
+alert('解析失败，请按 F12 查看控制台。')
+}finally{
+isParsing.value=false
+}
 }
 
 const settingVisible = ref(false); const addDialogVisible = ref(false)
